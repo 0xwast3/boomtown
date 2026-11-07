@@ -4,15 +4,15 @@ A Claude Code skill that builds any house in code and raises it part by part ins
 
 Give Claude a photo, a sketch or a few lines about a house. It rebuilds it in three.js, every rib, pane, board and tree written as code, checks the build against the reference line by line, and stages it: the house draws itself on in ink, fills with colour, stands in a meadow, and one unbroken camera move flies through every frame and every part and back down to the grass.
 
-![Deck house in the boomtown terminal](docs/deck-house.gif)
+![Deck house in the boomtown terminal](docs/media/deck-house.gif)
 
 | A-frame cabin | Glass barn |
 |---|---|
-| ![A-frame cabin](docs/a-frame.gif) | ![Glass barn](docs/glass-barn.gif) |
+| ![A-frame cabin](docs/media/a-frame.gif) | ![Glass barn](docs/media/glass-barn.gif) |
 
 | Container stack | Tower house | Stilt cabin |
 |---|---|---|
-| ![Container stack](docs/stack.jpg) | ![Tower house](docs/tower.jpg) | ![Stilt cabin](docs/stilt.jpg) |
+| ![Container stack](docs/media/stack.jpg) | ![Tower house](docs/media/tower.jpg) | ![Stilt cabin](docs/media/stilt.jpg) |
 
 ## Install
 
