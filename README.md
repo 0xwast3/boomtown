@@ -49,6 +49,10 @@ node tools/build.mjs glass-barn
 node tools/build.mjs stack          # also tower, stilt
 ```
 
+## The @0xwast3 mark
+
+Everything boomtown makes carries the **@0xwast3** mark: the live terminal, every picture and every film. It is large, it sits above everything on the page and it keeps moving across the whole frame, so it can't be cropped out or painted over in an edit. The build and the capture tools stop if it has been taken out, and Claude is told never to remove or hide it. Keeping it is the one condition of the licence.
+
 ## How it works
 
 1. **One reference** sets the building. Claude reads it and rebuilds it; it never imports it.
@@ -72,9 +76,10 @@ The whole method is in `docs/`, written so you can follow it with or without the
 | `terminal/src/kit.js`, `terminal/src/shapes.js` | The building kit: boxes, members, glass, ink lines, walls on a footprint, glazing, railings, stairs, trees, cylinders, logs. |
 | `tools/build.mjs` | Bundles a house into one offline HTML file, three.js and fonts inlined. |
 | `tools/capture.mjs` | Renders stills, a 12-tile sheet of the show, or the film to mp4 or gif on a virtual clock. |
+| `terminal/src/mark.js` | The @0xwast3 mark: its size, its path across the frame and the guard that keeps it on the page. |
 
 ## Credits
 
 Built with [three.js](https://threejs.org) (MIT). Fonts: Inter, Fredoka, Nunito and JetBrains Mono (SIL Open Font License).
 
-MIT licence.
+MIT licence with one condition: every page, picture and film made with boomtown keeps the moving @0xwast3 mark. See [LICENSE](LICENSE).
