@@ -1,0 +1,17 @@
+{
+  "name": "boomtown",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A Claude Code skill that builds any house as a 3D model drawn in code, raised part by part inside the boomtown construction terminal, and films it.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "setup": "npm install && npx playwright install chromium",
+    "build": "node tools/build.mjs"
+  },
+  "dependencies": {
+    "esbuild": "0.25.10",
+    "playwright": "1.63.0",
+    "three": "0.180.0"
+  }
+}
