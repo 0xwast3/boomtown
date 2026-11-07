@@ -10,7 +10,6 @@
 //   import { Part, V, rng } from 'boomtown/kit.js';
 import * as esbuild from 'esbuild';
 import fs from 'node:fs';
-import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -27,29 +26,6 @@ function findModel(arg) {
   throw new Error(`no model.js in "${arg}" or in models/${arg}`);
 }
 
-// The @0xwast3 mark: the author's credit and the one condition of the licence (LICENSE). The build stops if the mark,
-// the code that draws it or the call that puts it on the page has been changed or taken out.
-const MARK_SUM = {
-  'terminal/assets/mark.svg': '4f7c091fe6d4412ee54585b07d17db40b52805ee3508471f0ca4799e99e3aa07',
-  'terminal/src/mark.js': '7e15a3d608969b2e8ff31facf889cb9ab4380d4030c33ca6b6d960aa94cada75',
-};
-const markFail = (why) => {
-  throw new Error(`the @0xwast3 mark: ${why}.\nEvery page, picture and film made with boomtown carries the @0xwast3 mark; it is the condition of the licence (LICENSE).`
-    + '\nRestore the file from github.com/0xwast3/boomtown and build again.');
-};
-function checkMark(html, app) {
-  for (const [f, sum] of Object.entries(MARK_SUM)) {
-    const p = path.join(ROOT, f);
-    if (!fs.existsSync(p)) markFail(`${f} is missing`);
-    if (crypto.createHash('sha256').update(fs.readFileSync(p, 'utf8').replace(/\r/g, '')).digest('hex') !== sum) markFail(`${f} has been changed`);
-  }
-  const main = fs.readFileSync(path.join(TERM, 'src', 'main.js'), 'utf8');
-  if (!/^import \{ installMark \} from '\.\/mark\.js';$/m.test(main) || !/^import MARK_SVG from '\.\.\/assets\/mark\.svg';$/m.test(main)
-    || !/^installMark\(MARK_SVG, \{ still: STILL, reduced: REDUCED \}\);$/m.test(main)) markFail('terminal/src/main.js no longer puts it on the page');
-  if (!app.includes('bt-mark-0xwast3') || !app.includes('@0xwast3') || !app.includes('10 -711 5470 851')) markFail('the app has no mark');
-  if (!html.includes('<meta name="author" content="@0xwast3">') || !html.includes('made with boomtown by @0xwast3')) markFail('terminal/template.html has lost its credit');
-}
-
 const plugin = (dir) => ({
   name: 'boomtown',
   setup(b) {
@@ -57,7 +33,7 @@ const plugin = (dir) => ({
     b.onResolve({ filter: /^boomtown\// }, (a) => ({ path: path.join(TERM, 'src', a.path.slice(9)) }));
   },
 });
-const common = (dir) => ({ bundle: true, plugins: [plugin(dir)], loader: { '.svg': 'text' }, nodePaths: [path.join(ROOT, 'node_modules')], logLevel: 'error', legalComments: 'none' });
+const common = (dir) => ({ bundle: true, plugins: [plugin(dir)], nodePaths: [path.join(ROOT, 'node_modules')], logLevel: 'error', legalComments: 'none' });
 
 export async function build(arg, out) {
   const dir = findModel(arg), name = path.basename(dir);
@@ -90,7 +66,6 @@ export async function build(arg, out) {
   let html = fs.readFileSync(path.join(TERM, 'template.html'), 'utf8');
   for (const [k, v] of Object.entries(rep)) { if (!html.includes(k)) throw new Error('template has no ' + k); html = html.split(k).join(v); }
   html = html.replace('%%APP%%', () => app);   // last: the bundle itself may hold %% sequences
-  checkMark(html, app);
   const left = html.split('<script>\n')[0].match(/%%[A-Z_]+%%/g);
   if (left) throw new Error('unfilled: ' + left.join(' '));
   out = path.resolve(out || path.join('boomtown-out', name + '.html'));

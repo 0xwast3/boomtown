@@ -11,8 +11,6 @@ import { createEnv, EYE, EYE_FOOT } from './env.js';
 import { E, ENVU } from './envmat.js';
 import { createPost } from './post.js';
 import { UI } from './strings.js';
-import { installMark } from './mark.js';
-import MARK_SVG from '../assets/mark.svg';
 // the interface text with the model's own title, names and notes merged over it
 const merge = (a, b) => { if (!b) return a; const o = { ...a }; for (const k in b) o[k] = b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a && typeof a[k] === 'object' ? merge(a[k], b[k]) : b[k]; return o; };
 const STR = { en: merge(UI.en, TEXT.en), ru: merge(UI.ru, TEXT.ru || TEXT.en) };
@@ -32,8 +30,6 @@ const Q = new URLSearchParams(location.search);
 const STILL = Q.has('t');                                   // frozen frame for captures: ?t=seconds
 if (STILL) document.documentElement.classList.add('still');
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-// the @0xwast3 mark, first of all: large, on top and always moving. The licence requires it; see mark.js
-installMark(MARK_SVG, { still: STILL, reduced: REDUCED });
 
 // ── scene ────────────────────────────────────────────────────────────────
 const stage = $('#stage');

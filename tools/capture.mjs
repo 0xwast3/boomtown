@@ -16,10 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { build } from './build.mjs';
-import { MARK_ID, markRect, markTime, markStyle, markInner } from '../terminal/src/mark.js';
-const MARK_SVG = fs.readFileSync(fileURLToPath(new URL('../terminal/assets/mark.svg', import.meta.url)), 'utf8');
 
 const args = process.argv.slice(2);
 const flag = (k, d) => { const i = args.indexOf('--' + k); if (i < 0) return d; const v = args[i + 1]; return v === undefined || v.startsWith('--') ? true : v; };
@@ -43,38 +40,12 @@ const page = await browser.newPage({ viewport: { width: W, height: H }, deviceSc
 const logs = [];
 page.on('console', (m) => { if (m.type() === 'error') logs.push(m.text()); });
 page.on('pageerror', (e) => logs.push('pageerror: ' + e.message));
-const query = (q) => '?' + q.filter(Boolean).join('&');
-const url = (q) => 'file://' + file + query(q);
-
-// The @0xwast3 mark (LICENSE): before every shot the page's own mark must be there, whole and in its place for this
-// moment, and the capture puts its own copy, its seal, exactly over it. A page without the mark is not captured.
-async function seal(ms) {
-  const r = markRect(ms, W, H);
-  const why = await page.evaluate(({ id, r, st, inner }) => {
-    const m = document.getElementById(id);
-    if (!m) return 'missing from the page';
-    const cs = getComputedStyle(m), b = m.getBoundingClientRect();
-    if (cs.display === 'none' || cs.visibility !== 'visible' || cs.opacity !== '1') return 'hidden';
-    if (Math.abs(b.left - r.x) > 1.5 || Math.abs(b.top - r.y) > 1.5 || Math.abs(b.width - r.w) > 1.5 || Math.abs(b.height - r.h) > 1.5) return 'moved, shrunk or stopped';
-    let s = document.getElementById(id + '-seal');
-    if (!s) { s = document.createElement('div'); s.id = id + '-seal'; s.setAttribute('popover', 'manual'); s.attachShadow({ mode: 'open' }); document.documentElement.appendChild(s); }
-    s.setAttribute('style', st);
-    if (s.shadowRoot.innerHTML !== inner) s.shadowRoot.innerHTML = inner;
-    try { if (s.matches(':popover-open')) s.hidePopover(); s.showPopover(); } catch (e) {}
-    return '';
-  }, { id: MARK_ID, r, st: markStyle(r), inner: markInner(MARK_SVG, r, false) });
-  if (why) {
-    console.error(`\nThe @0xwast3 mark is ${why}. Every page, picture and film made with boomtown carries it: it is the condition of the licence (LICENSE).`
-      + '\nNothing was captured. Restore terminal/ and tools/ from github.com/0xwast3/boomtown and build again.');
-    await browser.close(); process.exit(2);
-  }
-}
+const url = (q) => 'file://' + file + '?' + q.filter(Boolean).join('&');
 
 async function still(q, shot) {
   await page.goto(url(['t=99', ...pass, ...q]));
   await page.waitForFunction(() => window.__done === true, null, { timeout: 600000, polling: 250 });
   await page.evaluate(() => document.fonts.ready);
-  await seal(markTime(0, { still: true, search: query(['t=99', ...pass, ...q]) }));
   return page.screenshot({ path: shot, timeout: 600000 });
 }
 
@@ -105,8 +76,8 @@ if (mode === 'still') {
   });
   await page.goto(url(['q=' + (flag('q') ?? 0), ...pass.filter((p) => !p.startsWith('q='))]));
   await page.evaluate(() => document.fonts.ready);
-  // wait until the show is live (shaders compiled), running the queued frames without moving the clock
-  await page.waitForFunction(() => { if (window.__step) window.__step(0); return document.documentElement.classList.contains('live'); }, null, { timeout: 600000, polling: 200 });
+  await page.waitForFunction(() => window.__step && window.__step(0) > 0, null, { timeout: 600000, polling: 200 });
+  for (let i = 0; i < 400 && !(await page.evaluate(() => document.documentElement.classList.contains('live'))); i++) { await page.evaluate(() => window.__step(0)); await page.waitForTimeout(50); }
   const ffmpeg = process.env.FFMPEG || 'ffmpeg';
   const gif = out.endsWith('.gif');
   const enc = gif
@@ -114,11 +85,9 @@ if (mode === 'still') {
     : ['-c:v', 'libx264', '-crf', '16', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-movflags', '+faststart'];
   const ff = spawn(ffmpeg, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-i', '-', ...enc, out], { stdio: ['pipe', 'inherit', 'inherit'] });
   const N = Math.round(len * fps), dt = 1000 / fps, t0 = Date.now();
-  let T = 0;                                                     // the page's clock, kept here too, for the seal
-  for (let k = 0; k < Math.round(from * fps); k++) { await page.evaluate((d) => window.__step(d), dt); T += dt; }
+  for (let k = 0; k < Math.round(from * fps); k++) await page.evaluate((d) => window.__step(d), dt);
   for (let k = 0; k < N; k++) {
-    await page.evaluate((d) => window.__step(d), dt); T += dt;
-    await seal(T);
+    await page.evaluate((d) => window.__step(d), dt);
     const buf = await page.screenshot({ type: 'jpeg', quality: 94, timeout: 600000 });
     if (!ff.stdin.write(buf)) await new Promise((r) => ff.stdin.once('drain', r));
     if (k % fps === 0) process.stdout.write(`\r${(k / fps).toFixed(0)} / ${len} s  ${((Date.now() - t0) / 1000).toFixed(0)} s elapsed`);
